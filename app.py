@@ -10,7 +10,7 @@ import os
 st.set_page_config(page_title="Requerimiento Conductores", layout="wide")
 
 st.title("📊 Requerimiento")
-st.markdown("Uso exclusivo para el mejor equipo de Conecta Mobility, en el cual participan las chiquillas más bonitas y simpáticas.")
+st.markdown("Uso exclusivo para el mejor equipo de Conecta Mobility, en el cual participan las chiquillas más bonitas y simpáticas de la empresa.")
 
 # ==========================================
 # 🧠 LÓGICA
