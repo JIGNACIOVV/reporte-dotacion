@@ -35,7 +35,7 @@ def estilo_balance(val):
 # ==========================================
 # 🚀 PROCESAMIENTO AUTOMÁTICO
 # ==========================================
-# Verifica que los archivos existan en la carpeta de la nube
+# Verifica que los archivos existan en la carpeta donde está la app
 if os.path.exists("Meta.xlsx") and os.path.exists("Buk.xlsx"):
     try:
         # 1. Procesar Meta
@@ -152,4 +152,4 @@ if os.path.exists("Meta.xlsx") and os.path.exists("Buk.xlsx"):
     except Exception as e:
         st.error(f"Error procesando los datos: {e}. Revisa que el formato de Buk y Meta no haya cambiado.")
 else:
-    st.warning("⚠️ El administrador aún no ha cargado los datos de hoy. Faltan los archivos 'Meta.xlsx' o 'Buk.xlsx'.")
+    st.warning("⚠️ El administrador aún no ha cargado los datos de hoy. Faltan los archivos 'Meta.xlsx' o 'Buk.xlsx' en la carpeta.")
