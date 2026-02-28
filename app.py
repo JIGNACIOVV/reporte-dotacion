@@ -2,19 +2,19 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import io
+import os
 
 # ==========================================
 # ⚙️ CONFIGURACIÓN DE LA PÁGINA
 # ==========================================
 st.set_page_config(page_title="Balance de Dotación", layout="wide")
 
-st.title("📊 Tablero de Control de Dotación")
-st.markdown("Carga los archivos de **Meta** y **Buk** para calcular el balance automáticamente.")
+st.title("📊 Tablero de Control de Dotación Diario")
+st.markdown("Visualización actualizada del balance entre el personal requerido y el contratado.")
 
 # ==========================================
-# 🧠 LÓGICA (Funciones Originales Adaptadas)
+# 🧠 LÓGICA
 # ==========================================
-
 def limpiar_texto(serie):
     return serie.astype(str).str.strip().str.upper()
 
@@ -25,7 +25,6 @@ def clasificar_jornada(texto):
     if 'part' in texto or 'parcial' in texto or 'media' in texto: return 'PT'
     return 'FT'
 
-# Función para colorear la tabla en la web
 def estilo_balance(val):
     if val < 0:
         return 'color: red; font-weight: bold'
@@ -34,24 +33,13 @@ def estilo_balance(val):
     return ''
 
 # ==========================================
-# 📂 CARGA DE ARCHIVOS
+# 🚀 PROCESAMIENTO AUTOMÁTICO
 # ==========================================
-col1, col2 = st.columns(2)
-
-with col1:
-    archivo_meta = st.file_uploader("📂 Cargar Meta.xlsx", type=["xlsx"])
-
-with col2:
-    archivo_buk = st.file_uploader("📂 Cargar Reporte Buk (Diario)", type=["xlsx"])
-
-# ==========================================
-# 🚀 PROCESAMIENTO
-# ==========================================
-
-if archivo_meta and archivo_buk:
+# Verifica que los archivos existan en la carpeta donde está la app
+if os.path.exists("Meta.xlsx") and os.path.exists("Buk.xlsx"):
     try:
         # 1. Procesar Meta
-        df_metas = pd.read_excel(archivo_meta)
+        df_metas = pd.read_excel("Meta.xlsx")
         if 'PK' in df_metas.columns:
             df_metas = df_metas.rename(columns={'PK': 'PEAK'})
         
@@ -62,11 +50,9 @@ if archivo_meta and archivo_buk:
         df_metas['Total_Req'] = df_metas['FT'] + df_metas['PT'] + df_metas['PEAK']
 
         # 2. Procesar BUK
-        # Nota: Asumimos las 5 filas a saltar del script original
-        df_buk = pd.read_excel(archivo_buk, header=5)
+        df_buk = pd.read_excel("Buk.xlsx", header=5)
         df_buk.columns = df_buk.columns.str.strip()
         
-        # Ajusta estos nombres si cambian en el excel
         COL_TERMINAL_BUK = "Nombre de Recintos" 
         COL_JORNADA_BUK = "Tipo_jornada"
 
@@ -91,7 +77,6 @@ if archivo_meta and archivo_buk:
         reporte = pd.merge(df_metas, resumen_real, on='Terminal', how='left').fillna(0)
         reporte['R_Total'] = reporte['R_FT'] + reporte['R_PT'] + reporte['R_PEAK']
         
-        # Balance
         reporte['B_FT'] = reporte['R_FT'] - reporte['FT']
         reporte['B_PT'] = reporte['R_PT'] - reporte['PT']
         reporte['B_PEAK'] = reporte['R_PEAK'] - reporte['PEAK']
@@ -99,27 +84,23 @@ if archivo_meta and archivo_buk:
 
         cols_finales = [
             'Terminal', 
-            'FT', 'PT', 'PEAK', 'Total_Req',       # REQUERIDO
-            'R_FT', 'R_PT', 'R_PEAK', 'R_Total',   # CONTRATADOS
-            'B_FT', 'B_PT', 'B_PEAK', 'B_Total'    # BALANCE
+            'FT', 'PT', 'PEAK', 'Total_Req',       
+            'R_FT', 'R_PT', 'R_PEAK', 'R_Total',   
+            'B_FT', 'B_PT', 'B_PEAK', 'B_Total'    
         ]
         reporte = reporte[cols_finales]
 
         # ==========================================
         # 🖥️ VISUALIZACIÓN EN PANTALLA
         # ==========================================
-        st.divider()
-        st.subheader("📋 Resumen Interactivo")
-
         # Filtros opcionales
-        filtro_terminal = st.multiselect("Filtrar por Terminal:", options=reporte['Terminal'].unique())
+        filtro_terminal = st.multiselect("🔍 Filtrar por Terminal:", options=reporte['Terminal'].unique())
         
         if filtro_terminal:
             df_view = reporte[reporte['Terminal'].isin(filtro_terminal)]
         else:
             df_view = reporte
 
-        # Mostrar tabla con colores
         cols_balance = ['B_FT', 'B_PT', 'B_PEAK', 'B_Total']
         st.dataframe(
             df_view.style.map(estilo_balance, subset=cols_balance)
@@ -129,7 +110,7 @@ if archivo_meta and archivo_buk:
         )
 
         # ==========================================
-        # 📥 DESCARGA EXCEL (Tu lógica original con formato)
+        # 📥 DESCARGA EXCEL (Para los compañeros que quieran el archivo)
         # ==========================================
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
@@ -137,7 +118,6 @@ if archivo_meta and archivo_buk:
             workbook = writer.book
             worksheet = writer.sheets['Balance']
 
-            # Tus formatos originales
             fmt_terminal = workbook.add_format({'bg_color': '#F4B084', 'bold': True, 'border': 1, 'align': 'center'})
             fmt_req = workbook.add_format({'bg_color': '#BDD7EE', 'bold': True, 'border': 1, 'align': 'center'})
             fmt_real = workbook.add_format({'bg_color': '#FFE699', 'bold': True, 'border': 1, 'align': 'center'})
@@ -163,14 +143,13 @@ if archivo_meta and archivo_buk:
             })
 
         st.download_button(
-            label="📥 Descargar Reporte Formateado",
+            label="📥 Descargar Reporte en Excel",
             data=buffer,
-            file_name="Reporte_Balance_Final.xlsx",
+            file_name="Reporte_Balance_Diario.xlsx",
             mime="application/vnd.ms-excel"
         )
 
     except Exception as e:
-        st.error(f"Ocurrió un error procesando los archivos: {e}")
-
+        st.error(f"Error procesando los datos: {e}. Revisa que el formato de Buk y Meta no haya cambiado.")
 else:
-    st.info("👆 Sube los archivos para ver el reporte.")
+    st.warning("⚠️ El administrador aún no ha cargado los datos de hoy. Faltan los archivos 'Meta.xlsx' o 'Buk.xlsx' en la carpeta.")
