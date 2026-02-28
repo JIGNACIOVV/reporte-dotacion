@@ -7,10 +7,10 @@ import os
 # ==========================================
 # ⚙️ CONFIGURACIÓN DE LA PÁGINA
 # ==========================================
-st.set_page_config(page_title="Balance de Dotación", layout="wide")
+st.set_page_config(page_title="Requerimiento Conductores", layout="wide")
 
-st.title("📊 Tablero de Control de Dotación Diario")
-st.markdown("Visualización actualizada del balance final de personal.")
+st.title("📊 Requerimiento")
+st.markdown("Uso exclusivo para el mejor equipo de Conecta Mobility")
 
 # ==========================================
 # 🧠 LÓGICA
