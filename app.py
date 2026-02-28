@@ -10,7 +10,7 @@ import os
 st.set_page_config(page_title="Balance de Dotación", layout="wide")
 
 st.title("📊 Tablero de Control de Dotación Diario")
-st.markdown("Visualización actualizada del balance entre el personal requerido y el contratado.")
+st.markdown("Visualización actualizada del balance final de personal.")
 
 # ==========================================
 # 🧠 LÓGICA
@@ -35,7 +35,6 @@ def estilo_balance(val):
 # ==========================================
 # 🚀 PROCESAMIENTO AUTOMÁTICO
 # ==========================================
-# Verifica que los archivos existan en la carpeta donde está la app
 if os.path.exists("Meta.xlsx") and os.path.exists("Buk.xlsx"):
     try:
         # 1. Procesar Meta
@@ -91,9 +90,8 @@ if os.path.exists("Meta.xlsx") and os.path.exists("Buk.xlsx"):
         reporte = reporte[cols_finales]
 
         # ==========================================
-        # 🖥️ VISUALIZACIÓN EN PANTALLA
+        # 🖥️ VISUALIZACIÓN EN PANTALLA (AQUÍ ESTÁ EL CAMBIO)
         # ==========================================
-        # Filtros opcionales
         filtro_terminal = st.multiselect("🔍 Filtrar por Terminal:", options=reporte['Terminal'].unique())
         
         if filtro_terminal:
@@ -101,16 +99,20 @@ if os.path.exists("Meta.xlsx") and os.path.exists("Buk.xlsx"):
         else:
             df_view = reporte
 
+        # Definimos exactamente qué columnas queremos mostrar en la web
+        cols_mostrar_web = ['Terminal', 'B_FT', 'B_PT', 'B_PEAK', 'B_Total']
         cols_balance = ['B_FT', 'B_PT', 'B_PEAK', 'B_Total']
+        
+        # Le pasamos solo esa lista al dataframe
         st.dataframe(
-            df_view.style.map(estilo_balance, subset=cols_balance)
-                   .format("{:.0f}", subset=df_view.columns[1:]),
+            df_view[cols_mostrar_web].style.map(estilo_balance, subset=cols_balance)
+                   .format("{:.0f}", subset=cols_balance),
             use_container_width=True,
             height=600
         )
 
         # ==========================================
-        # 📥 DESCARGA EXCEL (Para los compañeros que quieran el archivo)
+        # 📥 DESCARGA EXCEL (Sigue descargando todo el reporte completo)
         # ==========================================
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
@@ -143,7 +145,7 @@ if os.path.exists("Meta.xlsx") and os.path.exists("Buk.xlsx"):
             })
 
         st.download_button(
-            label="📥 Descargar Reporte en Excel",
+            label="📥 Descargar Reporte Completo en Excel",
             data=buffer,
             file_name="Reporte_Balance_Diario.xlsx",
             mime="application/vnd.ms-excel"
